@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting.Dependencies.NCalc;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
 
-    private delegate void PauseCallbackDelegate();
+    private delegate void PauseCallbackDelegate(bool isPaused);
     private static event PauseCallbackDelegate PAUSE_STATE_CHANGED;
 
 
@@ -15,7 +16,7 @@ public class GameManager : MonoBehaviour
     private bool _isPaused;
     
     //getters and setters
-    public bool Paused
+    private bool Paused
     {
         get => _isPaused;
         set
@@ -23,8 +24,8 @@ public class GameManager : MonoBehaviour
             if (_isPaused != value)
             {
                 _isPaused = value;
-                //Triggering the PAUSE_STATE_CHANGED event
-                PAUSE_STATE_CHANGED?.Invoke();
+                //triggering the PAUSE_STATE_CHANGED event
+                PAUSE_STATE_CHANGED?.Invoke(value);
             }
         }
     }
@@ -32,6 +33,34 @@ public class GameManager : MonoBehaviour
 
     private Image _uiBackground;
     // Start is called before the first frame update
+
+
+
+    private void PauseChangeListener(bool isPaused)
+    {
+        _uiBackground.enabled = isPaused;
+        if (isPaused)
+        {
+            Time.timeScale = 0;
+            Debug.Log("Paused the Game");
+        }
+        else
+        {
+            Time.timeScale = 1;
+            Debug.Log("Resumed the Game");
+        }
+    }
+
+    void Awake()
+    {
+        PAUSE_STATE_CHANGED += PauseChangeListener;
+    }
+
+    private void OnDestroy()
+    {
+        PAUSE_STATE_CHANGED -= PauseChangeListener;
+    }
+
     void Start()
     {
         _uiBackground = GameObject.Find("Canvas").GetComponent<Image>();
@@ -42,7 +71,7 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.P))
         {
-
+            Paused = !_isPaused;
         }
     }
 }
